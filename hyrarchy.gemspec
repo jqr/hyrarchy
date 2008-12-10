@@ -9,7 +9,7 @@ Gem::Specification.new do |s|
     'lib/hyrarchy.rb',
     'lib/hyrarchy/encoded_path.rb',
     'rails_plugin/init.rb',
-    'README',
+    'README.rdoc',
     'spec/create_nodes_table.rb',
     'spec/database.yml',
     'spec/hyrarchy_spec.rb',
@@ -26,6 +26,6 @@ Gem::Specification.new do |s|
     'test/test_helper.rb'
   ]
   s.has_rdoc = true
-  s.extra_rdoc_files = ['README', 'LICENSE']
+  s.extra_rdoc_files = ['README.rdoc', 'LICENSE']
   s.rdoc_options << '--all' << '--inline-source' << '--line-numbers'
 end
