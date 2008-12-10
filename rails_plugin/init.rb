@@ -1,0 +1,2 @@
+require 'hyrarchy'
+Hyrarchy.activate!

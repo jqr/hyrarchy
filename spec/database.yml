@@ -1,0 +1,6 @@
+---
+adapter: mysql
+host: localhost
+database: hyrarchy_test
+username: root
+password:

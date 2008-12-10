@@ -1,0 +1,31 @@
+Gem::Specification.new do |s| 
+  s.name = 'hyrarchy'
+  s.version = '0.1'
+  s.author = 'Dana Danger'
+  s.homepage = 'http://github.com/DanaDanger/hyrarchy'
+  s.platform = Gem::Platform::RUBY
+  s.summary = 'A gem and Rails plugin for working with hierarchic data.'
+  s.files = [
+    'lib/hyrarchy.rb',
+    'lib/hyrarchy/encoded_path.rb',
+    'rails_plugin/init.rb',
+    'README',
+    'spec/create_nodes_table.rb',
+    'spec/database.yml',
+    'spec/hyrarchy_spec.rb',
+    'spec/spec_helper.rb',
+    'test/encoded_path_test.rb',
+    'test/test_helper.rb'
+  ]
+  s.test_files = [
+    'spec/create_nodes_table.rb',
+    'spec/database.yml',
+    'spec/hyrarchy_spec.rb',
+    'spec/spec_helper.rb',
+    'test/encoded_path_test.rb',
+    'test/test_helper.rb'
+  ]
+  s.has_rdoc = true
+  s.extra_rdoc_files = ['README', 'LICENSE']
+  s.rdoc_options << '--all' << '--inline-source' << '--line-numbers'
+end

@@ -1,0 +1,55 @@
+= Hyrarchy
+
+Hyrarchy (Hybrid hieRarchy) is a gem and Rails plugin for working with hierarchic data in ActiveRecord. Your models gain methods for finding an instance's parent, children, ancestors, descendants, and depth, as well as a named scope for finding root nodes.
+
+To use Hyrarchy in your Rails app, copy the plugin from the gem into your app's vendors/plugins directory. (The plugin is just a two-liner that loads and activates the gem.)
+
+To use Hyrarchy in one of your models, add the following line to the class:
+
+  class Comment < ActiveRecord::Base
+    is_hierarchic
+  end
+
+Then add the hierarchic columns to the model's database table:
+
+  class MakeCommentsHierarchic < ActiveRecord::Migration
+    def self.up
+      add_hierarchy :comments
+    end
+    
+    def self.down
+      remove_hierarchy :comments
+    end
+  end
+
+Or you can put it in the same migration as the table's creation:
+
+  class CreateCommentsTable < ActiveRecord::Migration
+    def self.up
+      create_table :comments do |t|
+        t.integer :author_id
+        t.text :body
+      end
+      add_hierarchy :comments
+    end
+    
+    def self.down
+      drop_table :comments
+    end
+  end
+
+== Performance
+
+Hyrarchy scales to at least one million nodes with insertion and access times below 50ms.
+
+== Database Compatibility
+
+Hyrarchy has been tested formally with MySQL 5.0 and informally with SQLite 3.
+
+== Implementation Details
+
+Under the hood, Hyrarchy uses a combination of an adjacency list and a rational nested set. The nested set uses a technique developed by (I think) Vadim Tropashko, in which the left and right values are generated using Farey sequences. This makes it possible to insert new records without adjusting the left and right values of any other records. It also makes it possible to do many operations (like determining a record's depth in the tree) without accessing the database. For operations where rational nested sets perform poorly (such as finding a node's immediate descendants), the adjacency list is used.
+
+== Credits and Copyright
+
+Heavily based on works by Vadim Tropashko and Wim Lewis. Implemented by Dana Danger. Tolerated by VivaZoya. Copyright (c) 2008 The Indianapolis Star, released under the MIT license. See LICENSE for details.
