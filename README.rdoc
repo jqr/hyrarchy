@@ -40,11 +40,11 @@ Or you can put it in the same migration as the table's creation:
 
 == Performance
 
-Hyrarchy scales to at least one million nodes with insertion and access times below 50ms.
+On MySQL, Hyrarchy scales to at least one million nodes with insertion and access times below 50ms. On SQLite, times are below 200ms.
 
 == Database Compatibility
 
-Hyrarchy has been tested formally with MySQL 5.0 and informally with SQLite 3.
+Hyrarchy has been tested on MySQL 5 and SQLite 3.
 
 == Implementation Details
 

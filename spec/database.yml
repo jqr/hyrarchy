@@ -1,6 +1,10 @@
----
-adapter: mysql
-host: localhost
-database: hyrarchy_test
-username: root
-password:
+mysql:
+  adapter: mysql
+  host: localhost
+  database: hyrarchy_test
+  username: root
+  password:
+
+sqlite:
+  adapter: sqlite3
+  database: spec/test.sqlite3

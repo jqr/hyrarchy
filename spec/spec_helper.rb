@@ -1,4 +1,5 @@
 require 'rubygems'
+gem 'sqlite3-ruby'
 require 'spec'
 require 'activerecord'
 require 'yaml'
@@ -16,8 +17,9 @@ ActiveRecord::Base.logger = ActiveSupport::BufferedLogger.new(log_path)
 ActiveRecord::Base.logger.add 0, "\n"
 
 # Connect to the test database.
-db_spec = YAML.load_file(File.join(File.dirname(__FILE__), 'database.yml'))
-ActiveRecord::Base.establish_connection(db_spec)
+db_specs = YAML.load_file(File.join(File.dirname(__FILE__), 'database.yml'))
+which_spec = ENV['DB'] || 'mysql'
+ActiveRecord::Base.establish_connection(db_specs[which_spec])
 
 # Create a model class for testing.
 class Node < ActiveRecord::Base
