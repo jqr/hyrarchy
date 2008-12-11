@@ -144,10 +144,36 @@ module Hyrarchy
         :descendants,
         :conditions => { :lft => (lft - FLOAT_FUDGE_FACTOR)..(rgt + FLOAT_FUDGE_FACTOR) },
         :order => 'lft DESC',
+        # The query conditions intentionally load extra records that aren't
+        # descendants to account for floating point imprecision. This procedure
+        # removes the extra records.
         :after => Proc.new do |records|
           r = encoded_path.next_farey_fraction
           records.delete_if do |n|
             n.encoded_path <= encoded_path || n.encoded_path >= r
+          end
+        end,
+        # The regular count method doesn't work because of the fudge factor in
+        # the conditions. This procedure uses the length of the records array
+        # if it's been loaded. Otherwise it does a raw SQL query (to avoid the
+        # expense of instantiating a bunch of ActiveRecord objects) and prunes
+        # the results in the same manner as the :after procedure.
+        :count => Proc.new do
+          if descendants.loaded?
+            descendants.length
+          else
+            rows = self.class.connection.select_all("
+              SELECT lft_numer, lft_denom
+              FROM #{self.class.quoted_table_name}
+              WHERE #{descendants.conditions}")
+            r = encoded_path.next_farey_fraction
+            rows.delete_if do |row|
+              p = Hyrarchy::EncodedPath(
+                row['lft_numer'].to_i,
+                row['lft_denom'].to_i)
+              p <= encoded_path || p >= r
+            end
+            rows.length
           end
         end
       )
@@ -205,7 +231,7 @@ module Hyrarchy
     end
     
     def reload(options = nil)
-      @root = @ancestors = @descendants = nil
+      @root = @ancestors = @descendants = @descendants_count = nil
       super
     end
 
@@ -214,7 +240,7 @@ module Hyrarchy
     # Sets the node's encoded path, updating all relevant database columns to
     # match.
     def encoded_path=(r) # :nodoc:
-      @root = @ancestors = @descendants = nil
+      @root = @ancestors = @descendants = @descendants_count = nil
       if r.nil?
         self.lft_numer = nil
         self.lft_denom = nil

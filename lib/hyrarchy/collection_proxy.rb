@@ -6,6 +6,7 @@ module Hyrarchy
   class CollectionProxy < ActiveRecord::Associations::HasManyAssociation # :nodoc:
     def initialize(owner, name, options = {})
       @after = options.delete(:after)
+      @count = options.delete(:count)
       reflection = ActiveRecord::Base.create_reflection(
         :has_many, name, options.merge(:class_name => owner.class.to_s), owner.class)
       super(owner, reflection)
@@ -36,6 +37,19 @@ module Hyrarchy
       records = super
       @after.call(records) if @after
       records
+    end
+    
+    # Overrides count to run the association's +count+ procedure, with caching.
+    def count
+      if @count
+        if @count.respond_to?(:call)
+          @count = @count.call
+        else
+          @count
+        end
+      else
+        super
+      end
     end
     
   protected
