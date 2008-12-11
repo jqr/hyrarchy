@@ -1,4 +1,5 @@
 require 'hyrarchy/encoded_path'
+require 'hyrarchy/collection_proxy'
 
 module Hyrarchy
   # Fudge factor to account for imprecision with floating point approximations
@@ -132,41 +133,80 @@ module Hyrarchy
     end
     
     # Returns an array of this node's descendants: its children, grandchildren,
-    # and so on.
+    # and so on. The array returned by this method is a has_many association,
+    # so you can do things like this:
+    #
+    #   node.descendants.find(:all, :conditions => { ... })
+    #
     def descendants
-      nodes = self.class.find(
-        :all,
+      @descendants ||= CollectionProxy.new(
+        self,
+        :descendants,
         :conditions => { :lft => (lft - FLOAT_FUDGE_FACTOR)..(rgt + FLOAT_FUDGE_FACTOR) },
-        :order      => 'lft DESC'
+        :order => 'lft DESC',
+        :after => Proc.new do |records|
+          r = encoded_path.next_farey_fraction
+          records.delete_if do |n|
+            n.encoded_path <= encoded_path || n.encoded_path >= r
+          end
+        end
       )
-      r = encoded_path.next_farey_fraction
-      nodes.delete_if do |n|
-        n.encoded_path <= encoded_path || n.encoded_path >= r
-      end
-      nodes
     end
     
     # Returns an array of this node's ancestors--its parent, grandparent, and
-    # so on--ordered from parent to root.
+    # so on--ordered from parent to root. The array returned by this method is
+    # a has_many association, so you can do things like this:
+    #
+    #   node.ancestors.find(:all, :conditions => { ... })
+    #
     def ancestors
-      nodes = []
-      node = self
-      while true do
-        node = node.parent
-        return nodes if node.nil?
-        nodes << node
+      return @ancestors if @ancestors
+      
+      paths = []
+      path = encoded_path.parent
+      while path do
+        paths << path
+        path = path.parent
       end
+      
+      @ancestors ||= CollectionProxy.new(
+        self,
+        :ancestors,
+        :conditions => paths.empty? ? "id <> id" : [
+          paths.collect {|p| "(lft_numer = ? AND lft_denom = ?)"}.join(" OR "),
+          *(paths.collect {|p| [p.numerator, p.denominator]}.flatten)
+        ],
+        :order => 'lft DESC'
+      )
     end
     
     # Returns the root node related to this node, or nil if this node is a root
     # node.
     def root
-      ancestors.last
+      return @root if @root
+      
+      path = encoded_path.parent
+      while path do
+        parent = path.parent
+        break if parent.nil?
+        path = parent
+      end
+      
+      if path
+        self.class.send :find_by_encoded_path, path
+      else
+        nil
+      end
     end
     
     # Returns the number of nodes between this one and the top of the tree.
     def depth
       encoded_path.depth - 1
+    end
+    
+    def reload(options = nil)
+      @root = @ancestors = @descendants = nil
+      super
     end
 
   protected
@@ -174,6 +214,7 @@ module Hyrarchy
     # Sets the node's encoded path, updating all relevant database columns to
     # match.
     def encoded_path=(r) # :nodoc:
+      @root = @ancestors = @descendants = nil
       if r.nil?
         self.lft_numer = nil
         self.lft_denom = nil

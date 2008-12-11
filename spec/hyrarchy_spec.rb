@@ -132,9 +132,16 @@ describe Hyrarchy do
   describe "(performance)" do
     SAMPLE_SIZE = 15000
     LAYERS = 10
+    TIME_SPEC = ENV['DB'] == 'sqlite' ? 0.2 : 0.1
+    
+    def test_times(times)
+      (times.mean + 3 * times.stddev).should satisfy {|n| n < TIME_SPEC}
+      slope, offset = linear_regression(times)
+      (slope * 1_000_000 + offset).should satisfy {|n| n < TIME_SPEC}
+    end
     
     unless ENV['SKIP_PERFORMANCE']
-      it "should scale with constant insertion and access times < 50ms" do
+      it "should scale with constant insertion and access times < #{(TIME_SPEC * 1000).to_i}ms" do
         Node.connection.execute("TRUNCATE TABLE #{Node.quoted_table_name}") rescue Node.delete_all
         insertion_times   = NArray.float(SAMPLE_SIZE)
         parent_times      = NArray.float(SAMPLE_SIZE)
@@ -165,12 +172,12 @@ describe Hyrarchy do
           ancestors_times[i]   = measure_time { node.ancestors   }
           descendants_times[i] = measure_time { node.descendants }
         end
-      
-        [insertion_times, parent_times, children_times, ancestors_times, descendants_times].each do |times|
-          (times.mean + 3 * times.stddev).should satisfy {|n| n < 0.05}
-          slope, offset = linear_regression(times)
-          (slope * 1_000_000 + offset).should satisfy {|n| n < 0.05}
-        end
+        
+        test_times(insertion_times)
+        test_times(parent_times)
+        test_times(children_times)
+        test_times(ancestors_times)
+        test_times(descendants_times)
       end
     end
   end
