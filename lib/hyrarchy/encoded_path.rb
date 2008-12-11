@@ -1,13 +1,27 @@
 require 'rational'
 
 module Hyrarchy
+  # Returns a new path with numerator +n+ and denominator +d+, which will be
+  # reduced if possible. Paths must be in the interval [0,1]. This method
+  # correlates to the Rational(n, d) method.
   def self.EncodedPath(n, d)
     EncodedPath.reduce n, d
   end
-
-  class EncodedPath < Rational
+  
+  # An encoded path is a rational number that represents a node's position in
+  # the tree. By using rational numbers instead of integers, new nodes can be
+  # inserted arbitrarily without having to adjust the left and right values of
+  # any other nodes. Farey sequences are used to prevent denominators from
+  # growing exponentially and quickly exhausting the database's integer range.
+  # For more information, see "Nested Intervals with Farey Fractions" by Vadim
+  # Tropashko: http://arxiv.org/html/cs.DB/0401014
+  class EncodedPath < Rational # :nodoc:
+    # Path of the uppermost node in the tree. The node at this path has no
+    # siblings, and all nodes descend from it.
     ROOT = Hyrarchy::EncodedPath(0, 1)
-
+    
+    # Returns the path of the parent of the node at this path. If +root_is_nil+
+    # is true (the default) and the parent is the root node, returns nil.
     def parent(root_is_nil = true)
       r = next_farey_fraction
       p = Hyrarchy::EncodedPath(numerator - r.numerator, denominator - r.denominator)
@@ -17,7 +31,10 @@ module Hyrarchy
         p
       end
     end
-
+    
+    # Returns the depth of the node at this path, starting from the root node.
+    # Paths in the uppermost layer (considered "root nodes" by the ActiveRecord
+    # methods) have a depth of one.
     def depth
       n = self
       depth = 0
@@ -27,20 +44,32 @@ module Hyrarchy
       end
       depth
     end
-
+    
+    # Returns the path of the first child of the node at this path.
     def first_child
       mediant(next_farey_fraction)
     end
-
+    
+    # Returns the path of the sibling immediately after the node at this path.
     def next_sibling
       parent(false).mediant(self)
     end
-
+    
+    # Finds the mediant of this fraction and +other+.
     def mediant(other)
       Hyrarchy::EncodedPath(numerator + other.numerator, denominator + other.denominator)
     end
-
+    
+    # Returns the fraction immediately after this one in the Farey sequence
+    # whose order is this fraction's denominator. This is the find-neighbors
+    # algorithm from "Rounding rational numbers using Farey/Cauchy sequence" by
+    # Wim Lewis: http://www.hhhh.org/wiml/proj/farey
     def next_farey_fraction
+      # Compute the modular multiplicative inverses of the numerator and
+      # denominator using an iterative extended Euclidean algorithm. These
+      # inverses are the denominator and negative numerator of the fraction
+      # preceding this one, modulo the numerator and denominator of this
+      # fraction.
       a, b = [numerator, denominator]
       x, lastx, y, lasty = [0, 1, 1, 0]
       while b != 0
@@ -49,7 +78,10 @@ module Hyrarchy
         y, lasty = [lasty - q * y, y]
       end
       qL, pL = [lastx, -lasty]
-      # There's probably a smarter way to do this.
+      # Find the numerator and denominator of the fraction following this one
+      # using the mediant relationship between it, this fraction, and the
+      # preceding fraction. The modulo ambiguity is resolved by brute force,
+      # which is probably not the smartest way to do it, but it's fast enough.
       i = 0
       while true do
         a = pL + numerator * i

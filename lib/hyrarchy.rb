@@ -1,7 +1,9 @@
 require 'hyrarchy/encoded_path'
 
 module Hyrarchy
-  FLOAT_FUDGE_FACTOR = 0.0000000000001
+  # Fudge factor to account for imprecision with floating point approximations
+  # of a node's left and right fractions.
+  FLOAT_FUDGE_FACTOR = 0.0000000000001 # :nodoc:
   
   # Mixes Hyrarchy into ActiveRecord.
   def self.activate!
@@ -129,7 +131,8 @@ module Hyrarchy
       other
     end
     
-    # Returns this node's descendants: its children, grandchildren, and so on.
+    # Returns an array of this node's descendants: its children, grandchildren,
+    # and so on.
     def descendants
       nodes = self.class.find(
         :all,
@@ -143,7 +146,8 @@ module Hyrarchy
       nodes
     end
     
-    # Returns this node's ancestors: its parent, grandparent, and so on.
+    # Returns an array of this node's ancestors--its parent, grandparent, and
+    # so on--ordered from parent to root.
     def ancestors
       nodes = []
       node = self
@@ -169,7 +173,7 @@ module Hyrarchy
     
     # Sets the node's encoded path, updating all relevant database columns to
     # match.
-    def encoded_path=(r)
+    def encoded_path=(r) # :nodoc:
       if r.nil?
         self.lft_numer = nil
         self.lft_denom = nil
@@ -185,7 +189,7 @@ module Hyrarchy
     end
     
     # Returns the node's encoded path (its rational left value).
-    def encoded_path
+    def encoded_path # :nodoc:
       return nil if lft_numer.nil? || lft_denom.nil?
       Hyrarchy::EncodedPath(lft_numer, lft_denom)
     end
@@ -195,7 +199,7 @@ module Hyrarchy
     # before_save callback to ensure that this node's encoded path as a child
     # of its parent, and that its descendants' paths are updated if this node
     # has moved.
-    def set_encoded_paths
+    def set_encoded_paths # :nodoc:
       p = nil
       if @new_parent.nil?
         if lft_numer.nil? || lft_denom.nil?
@@ -222,7 +226,7 @@ module Hyrarchy
     
     # before_save callback to ensure that this node's parent_id attribute
     # agrees with its encoded path.
-    def set_parent_id
+    def set_parent_id # :nodoc:
       parent = self.class.send(:find_by_encoded_path, encoded_path.parent(false))
       self.parent_id = parent ? parent.id : nil
       true
@@ -230,7 +234,7 @@ module Hyrarchy
     
     # after_destroy callback to add this node's encoded path to its parent's
     # list of available child paths.
-    def mark_path_free
+    def mark_path_free # :nodoc:
       self.class.send(:child_path_is_free, encoded_path)
     end
   end
