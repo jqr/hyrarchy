@@ -67,6 +67,8 @@ module Hyrarchy
     # algorithm from "Rounding rational numbers using Farey/Cauchy sequence" by
     # Wim Lewis: http://www.hhhh.org/wiml/proj/farey
     def next_farey_fraction
+      # Handle the special case of the last fraction.
+      return nil if self == Rational(1, 1)
       # Compute the modular multiplicative inverses of the numerator and
       # denominator using an iterative extended Euclidean algorithm. These
       # inverses are the denominator and negative numerator of the fraction
