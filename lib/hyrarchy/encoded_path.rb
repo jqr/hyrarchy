@@ -26,12 +26,10 @@ module Hyrarchy
     # is true (the default) and the parent is the root node, returns nil.
     def parent(root_is_nil = true)
       r = next_farey_fraction
-      p = Hyrarchy::EncodedPath(numerator - r.numerator, denominator - r.denominator)
-      if root_is_nil && p == ROOT
-        nil
-      else
-        p
-      end
+      p = Hyrarchy::EncodedPath(
+        numerator - r.numerator,
+        denominator - r.denominator)
+      (root_is_nil && p == ROOT) ? nil : p
     end
     
     # Returns the depth of the node at this path, starting from the root node.
@@ -59,7 +57,9 @@ module Hyrarchy
     
     # Finds the mediant of this fraction and +other+.
     def mediant(other)
-      Hyrarchy::EncodedPath(numerator + other.numerator, denominator + other.denominator)
+      Hyrarchy::EncodedPath(
+        numerator + other.numerator,
+        denominator + other.denominator)
     end
     
     # Returns the fraction immediately after this one in the Farey sequence
@@ -90,7 +90,8 @@ module Hyrarchy
       while true do
         a = pL + numerator * i
         b = qL + denominator * i
-        if (numerator * b - denominator * a == 1) && (Rational(numerator - a, denominator - b).denominator <= denominator)
+        if (numerator * b - denominator * a == 1) &&
+          (Rational(numerator - a, denominator - b).denominator <= denominator)
           return Hyrarchy::EncodedPath(numerator - a, denominator - b)
         end
         i += 1
