@@ -4,8 +4,10 @@ module Hyrarchy
   # Returns a new path with numerator +n+ and denominator +d+, which will be
   # reduced if possible. Paths must be in the interval [0,1]. This method
   # correlates to the Rational(n, d) method.
-  def self.EncodedPath(n, d)
-    EncodedPath.reduce n, d
+  def self.EncodedPath(n, d) # :nodoc:
+    r = EncodedPath.reduce n, d
+    raise(RangeError, "paths must be in the interval [0,1]") if r < 0 || r > 1
+    r
   end
   
   # An encoded path is a rational number that represents a node's position in
