@@ -15,23 +15,51 @@ module Hyrarchy
   # These methods are available in ActiveRecord migrations for adding and
   # removing columns and indexes required by Hyrarchy.
   module Migrations
-    def add_hierarchy(table)
+    def add_hierarchy(table, options = {})
+      convert = options.delete(:convert)
+      unless options.empty?
+        raise(ArgumentError, "unknown keys: #{options.keys.join(', ')}")
+      end
+      
+      case convert
+      when :awesome_nested_set
+        remove_column table, :lft
+        remove_column table, :rgt
+      when '', nil
+      else
+        raise(ArgumentError, "don't know how to convert hierarchy from #{convert}")
+      end
+      
       add_column table, :lft,       :float
       add_column table, :rgt,       :float
       add_column table, :lft_numer, :integer
       add_column table, :lft_denom, :integer
-      add_column table, :parent_id, :integer
+      add_column table, :parent_id, :integer unless convert == :awesome_nested_set
       add_index table, :lft
       add_index table, [:lft_numer, :lft_denom], :unique => true
       add_index table, :parent_id
     end
     
-    def remove_hierarchy(table)
+    def remove_hierarchy(table, options = {})
+      convert = options.delete(:convert)
+      unless options.empty?
+        raise(ArgumentError, "unknown keys: #{options.keys.join(', ')}")
+      end
+      
       remove_column table, :lft
       remove_column table, :rgt
       remove_column table, :lft_numer
       remove_column table, :lft_denom
-      remove_column table, :parent_id, :integer
+      remove_column table, :parent_id, :integer unless convert == :awesome_nested_set
+      
+      case convert
+      when :awesome_nested_set
+        add_column table, :lft, :integer
+        add_column table, :rgt, :integer
+      when '', nil
+      else
+        raise(ArgumentError, "don't know how to convert hierarchy to #{convert}")
+      end
     end
   end
   
