@@ -32,9 +32,6 @@ module Hyrarchy
       remove_column table, :lft_numer
       remove_column table, :lft_denom
       remove_column table, :parent_id, :integer
-      remove_index table, :lft
-      remove_index table, [:lft_numer, :lft_denom]
-      remove_index table, :parent_id
     end
   end
   
