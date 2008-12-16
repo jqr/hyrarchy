@@ -124,7 +124,11 @@ module Hyrarchy
     # Sets this node's parent. To make this node a root node, set its parent to
     # +nil+.
     def parent=(other)
-      if encoded_path && other.encoded_path == encoded_path.parent
+      @make_root = false
+      if other.nil?
+        @new_parent = nil
+        @make_root = true
+      elsif encoded_path && other.encoded_path == encoded_path.parent
         @new_parent = nil
       else
         @new_parent = other
@@ -268,6 +272,8 @@ module Hyrarchy
     # has moved.
     def set_encoded_paths # :nodoc:
       p = nil
+      self.lft_numer = self.lft_denom = nil if @make_root
+      
       if @new_parent.nil?
         if lft_numer.nil? || lft_denom.nil?
           p = Hyrarchy::EncodedPath::ROOT
