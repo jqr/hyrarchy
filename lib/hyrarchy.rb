@@ -86,12 +86,7 @@ module Hyrarchy
     def next_child_encoded_path(parent_path)
       p = free_child_paths(parent_path).shift || parent_path.first_child
       while true do
-        cnt = connection.select_all("
-          SELECT count(1) cnt
-          FROM #{quoted_table_name}
-          WHERE lft_numer = #{p.numerator} AND lft_denom = #{p.denominator}
-        ").first['cnt'].to_i
-        if cnt == 1
+        if exists?(:lft_numer => p.numerator, :lft_denom => p.denominator)
           p = parent_path.mediant(p)
         else
           if free_child_paths(parent_path).empty?
