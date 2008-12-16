@@ -1,5 +1,6 @@
 require 'hyrarchy/encoded_path'
 require 'hyrarchy/collection_proxy'
+require 'hyrarchy/awesome_nested_set_compatibility'
 
 module Hyrarchy
   # Fudge factor to account for imprecision with floating point approximations
@@ -91,6 +92,8 @@ module Hyrarchy
   # declared is_hierarchic. They're used internally and aren't intended to be
   # used by application developers.
   module ClassMethods # :nodoc:
+    include Hyrarchy::AwesomeNestedSetCompatibility::ClassMethods
+    
   private
     
     # Returns an array of unused child paths beneath +parent_path+.
@@ -109,6 +112,11 @@ module Hyrarchy
     # Removes all paths from the array of free child paths for +parent_path+.
     def reset_free_child_paths(parent_path)
       free_child_paths(parent_path).clear
+    end
+    
+    # Removes all paths from the array of free child paths.
+    def reset_all_free_child_paths
+      @@free_child_paths = {}
     end
     
     # Finds the first unused child path beneath +parent_path+.
@@ -138,6 +146,8 @@ module Hyrarchy
   # These methods are available to instances of models that have been declared
   # is_hierarchic.
   module InstanceMethods
+    include Hyrarchy::AwesomeNestedSetCompatibility::InstanceMethods
+    
     # Returns this node's parent, or +nil+ if this is a root node.
     def parent
       return @new_parent if @new_parent
@@ -153,7 +163,7 @@ module Hyrarchy
       if other.nil?
         @new_parent = nil
         @make_root = true
-      elsif encoded_path && other.encoded_path == encoded_path.parent
+      elsif encoded_path && other.encoded_path == (encoded_path.parent rescue nil)
         @new_parent = nil
       else
         @new_parent = other
@@ -162,51 +172,10 @@ module Hyrarchy
     end
     
     # Returns an array of this node's descendants: its children, grandchildren,
-    # and so on. The array returned by this method is a has_many association,
-    # so you can do things like this:
-    #
-    #   node.descendants.find(:all, :conditions => { ... })
-    #
+    # and so on. The array returned by this method is a named scope.
     def descendants
-      @descendants ||= CollectionProxy.new(
-        self,
-        :descendants,
-        :conditions => { :lft => (lft - FLOAT_FUDGE_FACTOR)..(rgt + FLOAT_FUDGE_FACTOR) },
-        :order => 'lft DESC',
-        # The query conditions intentionally load extra records that aren't
-        # descendants to account for floating point imprecision. This procedure
-        # removes the extra records.
-        :after => Proc.new do |records|
-          r = encoded_path.next_farey_fraction
-          records.delete_if do |n|
-            n.encoded_path <= encoded_path || n.encoded_path >= r
-          end
-        end,
-        # The regular count method doesn't work because of the fudge factor in
-        # the conditions. This procedure uses the length of the records array
-        # if it's been loaded. Otherwise it does a raw SQL query (to avoid the
-        # expense of instantiating a bunch of ActiveRecord objects) and prunes
-        # the results in the same manner as the :after procedure.
-        :count => Proc.new do
-          if descendants.loaded?
-            descendants.length
-          else
-            sql = "
-              SELECT lft_numer, lft_denom
-              FROM #{self.class.quoted_table_name}"
-            self.class.send :add_conditions!, sql, descendants.conditions
-            rows = self.class.connection.select_all(sql)
-            r = encoded_path.next_farey_fraction
-            rows.delete_if do |row|
-              p = Hyrarchy::EncodedPath(
-                row['lft_numer'].to_i,
-                row['lft_denom'].to_i)
-              p <= encoded_path || p >= r
-            end
-            rows.length
-          end
-        end
-      )
+      cached[:descendants] ||=
+        self_and_descendants.scoped :conditions => "id <> #{id}"
     end
     
     # Returns an array of this node's ancestors--its parent, grandparent, and
@@ -215,19 +184,20 @@ module Hyrarchy
     #
     #   node.ancestors.find(:all, :conditions => { ... })
     #
-    def ancestors
-      return @ancestors if @ancestors
+    def ancestors(with_self = false)
+      cache_key = with_self ? :self_and_ancestors : :ancestors
+      return cached[cache_key] if cached[cache_key]
       
       paths = []
-      path = encoded_path.parent
+      path = with_self ? encoded_path : encoded_path.parent
       while path do
         paths << path
         path = path.parent
       end
       
-      @ancestors ||= CollectionProxy.new(
+      cached[cache_key] = CollectionProxy.new(
         self,
-        :ancestors,
+        cache_key,
         :conditions => paths.empty? ? "id <> id" : [
           paths.collect {|p| "(lft_numer = ? AND lft_denom = ?)"}.join(" OR "),
           *(paths.collect {|p| [p.numerator, p.denominator]}.flatten)
@@ -239,7 +209,7 @@ module Hyrarchy
     # Returns the root node related to this node, or nil if this node is a root
     # node.
     def root
-      return @root if @root
+      return cached[:root] if cached[:root]
       
       path = encoded_path.parent
       while path do
@@ -260,10 +230,10 @@ module Hyrarchy
       encoded_path.depth - 1
     end
     
-    # Overrides ActiveRecord's reload method to clear the cached ancestors and
-    # descendants associations.
+    # Overrides ActiveRecord's reload method to clear cached scopes and ad hoc
+    # associations.
     def reload(options = nil) # :nodoc:
-      @root = @ancestors = @descendants = nil
+      @cached = {}
       super
     end
 
@@ -272,7 +242,7 @@ module Hyrarchy
     # Sets the node's encoded path, updating all relevant database columns to
     # match.
     def encoded_path=(r) # :nodoc:
-      @root = @ancestors = @descendants = nil
+      @cached = {}
       if r.nil?
         self.lft_numer = nil
         self.lft_denom = nil
@@ -291,6 +261,11 @@ module Hyrarchy
     def encoded_path # :nodoc:
       return nil if lft_numer.nil? || lft_denom.nil?
       Hyrarchy::EncodedPath(lft_numer, lft_denom)
+    end
+    
+    # Returns a hash for caching scopes and ad hoc associations.
+    def cached # :nodoc:
+      @cached ||= {}
     end
     
   private
