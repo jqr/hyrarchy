@@ -288,7 +288,7 @@ module Hyrarchy
         new_path = self.class.send(:next_child_encoded_path, p)
         if encoded_path != new_path
           self.class.send(:reset_free_child_paths, encoded_path)
-          self.encoded_path = self.class.send(:next_child_encoded_path, p)
+          self.encoded_path = new_path
           children.each do |c|
             c.parent = self
             c.save!
