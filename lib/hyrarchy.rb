@@ -68,21 +68,25 @@ module Hyrarchy
   module ClassMethods # :nodoc:
   private
     
+    # Returns an array of unused child paths beneath +parent_path+.
     def free_child_paths(parent_path)
       @@free_child_paths ||= {}
       @@free_child_paths[parent_path] ||= []
     end
     
+    # Stores +path+ in the arrays of free child paths.
     def child_path_is_free(path)
       parent_path = path.parent(false)
       free_child_paths(parent_path) << path
       free_child_paths(parent_path).sort!
     end
     
+    # Removes all paths from the array of free child paths for +parent_path+.
     def reset_free_child_paths(parent_path)
       free_child_paths(parent_path).clear
     end
     
+    # Finds the first unused child path beneath +parent_path+.
     def next_child_encoded_path(parent_path)
       p = free_child_paths(parent_path).shift || parent_path.first_child
       while true do
@@ -97,6 +101,7 @@ module Hyrarchy
       end
     end
     
+    # Returns the node with the specified encoded path.
     def find_by_encoded_path(p)
       find(:first, :conditions => {
         :lft_numer => p.numerator,
@@ -258,7 +263,7 @@ module Hyrarchy
     
   private
     
-    # before_save callback to ensure that this node's encoded path as a child
+    # before_save callback to ensure that this node's encoded path is a child
     # of its parent, and that its descendants' paths are updated if this node
     # has moved.
     def set_encoded_paths # :nodoc:
