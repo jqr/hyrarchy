@@ -191,10 +191,11 @@ module Hyrarchy
           if descendants.loaded?
             descendants.length
           else
-            rows = self.class.connection.select_all("
+            sql = "
               SELECT lft_numer, lft_denom
-              FROM #{self.class.quoted_table_name}
-              WHERE #{descendants.conditions}")
+              FROM #{self.class.quoted_table_name}"
+            self.class.send :add_conditions!, sql, descendants.conditions
+            rows = self.class.connection.select_all(sql)
             r = encoded_path.next_farey_fraction
             rows.delete_if do |row|
               p = Hyrarchy::EncodedPath(
