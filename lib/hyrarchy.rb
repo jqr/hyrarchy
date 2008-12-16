@@ -234,8 +234,10 @@ module Hyrarchy
       encoded_path.depth - 1
     end
     
-    def reload(options = nil)
-      @root = @ancestors = @descendants = @descendants_count = nil
+    # Overrides ActiveRecord's reload method to clear the cached ancestors and
+    # descendants associations.
+    def reload(options = nil) # :nodoc:
+      @root = @ancestors = @descendants = nil
       super
     end
 
@@ -244,7 +246,7 @@ module Hyrarchy
     # Sets the node's encoded path, updating all relevant database columns to
     # match.
     def encoded_path=(r) # :nodoc:
-      @root = @ancestors = @descendants = @descendants_count = nil
+      @root = @ancestors = @descendants = nil
       if r.nil?
         self.lft_numer = nil
         self.lft_denom = nil
