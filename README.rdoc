@@ -46,6 +46,20 @@ On MySQL, Hyrarchy scales to at least one million nodes with insertion and acces
 
 Hyrarchy has been tested on MySQL 5 and SQLite 3.
 
+== Replacing awesome_nested_set
+
+Hyrarchy is designed to be an almost-drop-in replacement for awesome_nested_set. All of awesome_nested_set's methods are implemented by Hyrarchy, but you'll need to replace calls to acts_as_nested_set with is_hierarchic. You'll also need to replace awesome_nested_set's database columns with Hyrarchy's, which you can do with an option to the add_hierarchy migration method:
+
+  add_hierarchy :comments, :convert => :awesome_nested_set
+
+The convert option will modify the table structure but it won't rebuild the hierarchy information. You can rebuild it by calling rebuild! on your hierarchic model class:
+
+  Comment.rebuild!
+
+The same option can be used with remove_hierarchy for the down half of a migration.
+
+Hyrarchy doesn't yet support awesome_nested_set's scoping feature or its view helper.
+
 == Implementation Details
 
 Under the hood, Hyrarchy uses a combination of an adjacency list and a rational nested set. The nested set uses a technique developed by (I think) Vadim Tropashko, in which the left and right values are generated using Farey sequences. This makes it possible to insert new records without adjusting the left and right values of any other records. It also makes it possible to do many operations (like determining a record's depth in the tree) without accessing the database. For operations where rational nested sets perform poorly (such as finding a node's immediate descendants), the adjacency list is used.
