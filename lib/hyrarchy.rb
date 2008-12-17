@@ -74,7 +74,7 @@ module Hyrarchy
       
       has_many :children,
         :foreign_key => 'parent_id',
-        :order       => 'lft DESC',
+        :order       => 'rgt DESC, lft',
         :class_name  => self.to_s,
         :dependent   => :destroy
       
@@ -84,7 +84,7 @@ module Hyrarchy
       
       named_scope :roots,
         :conditions => { :parent_id => nil },
-        :order      => 'lft DESC'
+        :order      => 'rgt DESC, lft'
     end
   end
   
@@ -202,7 +202,7 @@ module Hyrarchy
           paths.collect {|p| "(lft_numer = ? AND lft_denom = ?)"}.join(" OR "),
           *(paths.collect {|p| [p.numerator, p.denominator]}.flatten)
         ],
-        :order => 'lft DESC'
+        :order => 'rgt DESC, lft'
       )
     end
     

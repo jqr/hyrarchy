@@ -149,7 +149,7 @@ module Hyrarchy
 
         cached[cache_key] = self.class.scoped(
           :conditions => conditions,
-          :order      => 'lft DESC'
+          :order      => 'rgt DESC, lft'
         )
       end
 
@@ -178,7 +178,7 @@ module Hyrarchy
           self,
           :descendants,
           :conditions => { :lft => (lft - FLOAT_FUDGE_FACTOR)..(rgt + FLOAT_FUDGE_FACTOR) },
-          :order => 'lft DESC',
+          :order => 'rgt DESC, lft',
           # The query conditions intentionally load extra records that aren't
           # descendants to account for floating point imprecision. This
           # procedure removes the extra records.
