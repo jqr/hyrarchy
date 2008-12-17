@@ -61,10 +61,10 @@ module Hyrarchy
         
         update_all("lft = id, rgt = id, lft_numer = id, lft_denom = id")
         reset_all_free_child_paths
-        
         paths_by_id = {}
+        order_by = columns_hash['created_at'] ? :created_at : :id
         
-        nodes = roots
+        nodes = roots :order => order_by
         until nodes.empty? do
           nodes.each do |node|
             parent_path = paths_by_id[node.parent_id] || Hyrarchy::EncodedPath::ROOT
@@ -73,7 +73,7 @@ module Hyrarchy
             paths_by_id[node.id] = node.send(:encoded_path)
           end
           node_ids = nodes.collect {|n| n.id}
-          nodes = find(:all, :conditions => { :parent_id => node_ids })
+          nodes = find(:all, :conditions => { :parent_id => node_ids }, :order => order_by)
         end
       end
     end
