@@ -7,7 +7,9 @@ Gem::Specification.new do |s|
   s.summary = 'A gem and Rails plugin for working with hierarchic data.'
   s.files = [
     'lib/hyrarchy.rb',
+    'lib/hyrarchy/collection_proxy.rb',
     'lib/hyrarchy/encoded_path.rb',
+    'lib/hyrarchy/awesome_nested_set_compatibility.rb',
     'rails_plugin/init.rb',
     'README.rdoc',
     'spec/create_nodes_table.rb',
