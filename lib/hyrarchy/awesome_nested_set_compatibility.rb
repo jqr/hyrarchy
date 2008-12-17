@@ -57,7 +57,7 @@ module Hyrarchy
       # Rebuilds the model's hierarchy attributes based on the parent_id
       # attributes.
       def rebuild!
-        return true if valid?
+        return true if (valid? rescue false)
         
         update_all("lft = id, rgt = id, lft_numer = id, lft_denom = id")
         reset_all_free_child_paths
