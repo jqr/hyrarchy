@@ -210,6 +210,25 @@ module Hyrarchy
               end
               rows.length
             end
+          end,
+          # Associations don't normally have an optimized index method, but
+          # this one does. :)
+          :index => Proc.new do |obj|
+            rows = self.class.connection.select_all("
+              SELECT id, lft_numer, lft_denom
+              FROM #{self.class.quoted_table_name}
+              WHERE #{descendants.conditions}
+              ORDER BY rgt DESC, lft")
+            r = encoded_path.next_farey_fraction
+            rows.delete_if do |row|
+              p = Hyrarchy::EncodedPath(
+                row['lft_numer'].to_i,
+                row['lft_denom'].to_i)
+              row.delete('lft_numer')
+              row.delete('lft_denom')
+              p < encoded_path || p >= r
+            end
+            rows.index({'id' => obj.id.to_s})
           end
         )
       end

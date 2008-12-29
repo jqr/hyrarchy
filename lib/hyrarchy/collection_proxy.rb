@@ -7,6 +7,7 @@ module Hyrarchy
     def initialize(owner, name, options = {})
       @after = options.delete(:after)
       @count = options.delete(:count)
+      @index = options.delete(:index)
       reflection = ActiveRecord::Base.create_reflection(
         :has_many, name, options.merge(:class_name => owner.class.to_s), owner.class)
       super(owner, reflection)
@@ -47,6 +48,15 @@ module Hyrarchy
         else
           @count
         end
+      else
+        super
+      end
+    end
+    
+    # Overrides index to run the association's +index+ procedure.
+    def index(obj)
+      if @index && !loaded?
+        @index.call(obj)
       else
         super
       end
