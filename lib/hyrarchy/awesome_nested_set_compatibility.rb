@@ -60,7 +60,6 @@ module Hyrarchy
         return true if (valid? rescue false)
         
         update_all("lft = id, rgt = id, lft_numer = id, lft_denom = id")
-        reset_all_free_child_paths
         paths_by_id = {}
         order_by = columns_hash['created_at'] ? :created_at : :id
         

@@ -80,7 +80,7 @@ module Hyrarchy
       
       before_save :set_encoded_paths
       before_save :set_parent_id
-      after_destroy :mark_path_free
+      after_save :update_descendant_paths
       
       named_scope :roots,
         :conditions => { :parent_id => nil },
@@ -96,41 +96,17 @@ module Hyrarchy
     
   private
     
-    # Returns an array of unused child paths beneath +parent_path+.
-    def free_child_paths(parent_path)
-      @@free_child_paths ||= {}
-      @@free_child_paths[parent_path] ||= []
-    end
-    
-    # Stores +path+ in the arrays of free child paths.
-    def child_path_is_free(path)
-      parent_path = path.parent(false)
-      free_child_paths(parent_path) << path
-      free_child_paths(parent_path).sort!
-    end
-    
-    # Removes all paths from the array of free child paths for +parent_path+.
-    def reset_free_child_paths(parent_path)
-      free_child_paths(parent_path).clear
-    end
-    
-    # Removes all paths from the array of free child paths.
-    def reset_all_free_child_paths
-      @@free_child_paths = {}
-    end
-    
     # Finds the first unused child path beneath +parent_path+.
     def next_child_encoded_path(parent_path)
-      p = free_child_paths(parent_path).shift || parent_path.first_child
-      while true do
-        if exists?(:lft_numer => p.numerator, :lft_denom => p.denominator)
-          p = parent_path.mediant(p)
+      if parent_path == Hyrarchy::EncodedPath::ROOT
+        if sibling = roots.last
+          sibling.send(:encoded_path).next_sibling
         else
-          if free_child_paths(parent_path).empty?
-            child_path_is_free(parent_path.mediant(p))
-          end
-          return p
+          Hyrarchy::EncodedPath::ROOT.first_child
         end
+      else
+        node = find_by_encoded_path(parent_path)
+        node ? node.send(:next_child_encoded_path) : parent_path.first_child
       end
     end
     
@@ -202,7 +178,7 @@ module Hyrarchy
           paths.collect {|p| "(lft_numer = ? AND lft_denom = ?)"}.join(" OR "),
           *(paths.collect {|p| [p.numerator, p.denominator]}.flatten)
         ],
-        :order => 'rgt DESC, lft'
+        :order => 'rgt, lft DESC'
       )
     end
     
@@ -249,6 +225,7 @@ module Hyrarchy
         self.lft = nil
         self.rgt = nil
       else
+        @path_has_changed = true
         self.lft_numer = r.numerator
         self.lft_denom = r.denominator
         self.lft = r.to_f
@@ -268,12 +245,22 @@ module Hyrarchy
       @cached ||= {}
     end
     
+    # Returns the first unused child path under this node.
+    def next_child_encoded_path
+      return nil unless encoded_path
+      if children.empty?
+        encoded_path.first_child
+      else
+        children.last.send(:encoded_path).next_sibling
+      end
+    end
+    
   private
     
     # before_save callback to ensure that this node's encoded path is a child
-    # of its parent, and that its descendants' paths are updated if this node
-    # has moved.
+    # of its parent.
     def set_encoded_paths # :nodoc:
+      @path_has_changed = false if @path_has_changed.nil?
       p = nil
       self.lft_numer = self.lft_denom = nil if @make_root
       
@@ -287,13 +274,8 @@ module Hyrarchy
       
       if p
         new_path = self.class.send(:next_child_encoded_path, p)
-        if encoded_path != new_path
-          self.class.send(:reset_free_child_paths, encoded_path)
+        if @path_has_changed = (encoded_path != new_path)
           self.encoded_path = new_path
-          children.each do |c|
-            c.parent = self
-            c.save!
-          end
         end
       end
       
@@ -308,10 +290,19 @@ module Hyrarchy
       true
     end
     
-    # after_destroy callback to add this node's encoded path to its parent's
-    # list of available child paths.
-    def mark_path_free # :nodoc:
-      self.class.send(:child_path_is_free, encoded_path)
+    # after_save callback to ensure that this node's descendants are updated if
+    # this node has moved.
+    def update_descendant_paths
+      return true unless @path_has_changed
+      
+      child_path = encoded_path.first_child
+      children.each do |c|
+        c.encoded_path = child_path
+        c.save!
+        child_path = child_path.next_sibling
+      end
+      
+      true
     end
   end
 end
