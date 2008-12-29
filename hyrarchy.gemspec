@@ -1,6 +1,6 @@
 Gem::Specification.new do |s| 
   s.name = 'hyrarchy'
-  s.version = '0.1'
+  s.version = '0.2'
   s.author = 'Dana Danger'
   s.homepage = 'http://github.com/DanaDanger/hyrarchy'
   s.platform = Gem::Platform::RUBY
