@@ -260,9 +260,17 @@ module Hyrarchy
       def same_scope?(other)
         true
       end
-
+      
+      # Returns the sibling before this node. If this node is its parent's
+      # first child, returns nil.
       def left_sibling # :nodoc:
-        raise NotImplementedError, "awesome_nested_set's left_sibling method isn't implemented in this version of Hyrarchy"
+        path = send(:encoded_path)
+        return nil if path == path.parent.first_child
+        sibling_path = path.previous_sibling
+        until self.class.exists?(:lft_numer => sibling_path.numerator, :lft_denom => sibling_path.denominator)
+          sibling_path = sibling_path.previous_sibling
+        end
+        self.class.send(:find_by_encoded_path, sibling_path)
       end
 
       # Returns the sibling after this node. If this node is its parent's last
