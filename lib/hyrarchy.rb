@@ -294,7 +294,7 @@ module Hyrarchy
     
     # after_save callback to ensure that this node's descendants are updated if
     # this node has moved.
-    def update_descendant_paths
+    def update_descendant_paths # :nodoc:
       return true unless @path_has_changed
       children.reload if children.loaded? && children.empty?
       
@@ -309,7 +309,7 @@ module Hyrarchy
     end
     
     # Resets internal flags after saving.
-    def reset_flags
+    def reset_flags # :nodoc:
       @path_has_changed = @new_parent = @make_root = nil
     end
   end

@@ -290,7 +290,7 @@ module Hyrarchy
       #
       # If this node isn't a sibling of +other+, its parent will be set to
       # +other+'s parent.
-      def move_to_left_of(other) # :nodoc:
+      def move_to_left_of(other)
         # Don't attempt an impossible move.
         if other.is_descendant_of?(self)
           raise ArgumentError, "you can't move a node to the left of one of its descendants"
