@@ -81,6 +81,7 @@ module Hyrarchy
       before_save :set_encoded_paths
       before_save :set_parent_id
       after_save :update_descendant_paths
+      after_save :reset_flags
       
       named_scope :roots,
         :conditions => { :parent_id => nil },
@@ -210,6 +211,7 @@ module Hyrarchy
     # associations.
     def reload(options = nil) # :nodoc:
       @cached = {}
+      reset_flags
       super
     end
 
@@ -294,6 +296,7 @@ module Hyrarchy
     # this node has moved.
     def update_descendant_paths
       return true unless @path_has_changed
+      children.reload if children.loaded? && children.empty?
       
       child_path = encoded_path.first_child
       children.each do |c|
@@ -303,6 +306,11 @@ module Hyrarchy
       end
       
       true
+    end
+    
+    # Resets internal flags after saving.
+    def reset_flags
+      @path_has_changed = @new_parent = @make_root = nil
     end
   end
 end
