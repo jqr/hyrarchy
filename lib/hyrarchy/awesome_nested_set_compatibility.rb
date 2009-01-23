@@ -276,9 +276,35 @@ module Hyrarchy
       def move_right # :nodoc:
         raise NotImplementedError, "awesome_nested_set's move_right method isn't implemented in this version of Hyrarchy"
       end
-
+      
+      # The semantics of left and right don't quite map exactly from
+      # awesome_nested_set to Hyrarchy. For the purpose of this method, "left"
+      # means "before."
+      #
+      # If this node isn't a sibling of +other+, its parent will be set to
+      # +other+'s parent.
       def move_to_left_of(other) # :nodoc:
-        raise NotImplementedError, "awesome_nested_set's move_to_left_of method isn't implemented in this version of Hyrarchy"
+        # Don't attempt an impossible move.
+        if other.is_descendant_of?(self)
+          raise ArgumentError, "you can't move a node to the left of one of its descendants"
+        end
+        # Find the first unused path after +other+'s path.
+        open_path = other.send(:encoded_path).next_sibling
+        while self.class.exists?(:lft_numer => open_path.numerator, :lft_denom => open_path.denominator)
+          open_path = open_path.next_sibling
+        end
+        # Move +other+, and all nodes following it, down.
+        while open_path != other.send(:encoded_path)
+          p = open_path.previous_sibling
+          n = self.class.send(:find_by_encoded_path, p)
+          n.send(:encoded_path=, open_path)
+          n.save!
+          open_path = p
+        end
+        puts open_path
+        # Insert this node.
+        send(:encoded_path=, open_path)
+        save!
       end
 
       def move_to_right_of(other) # :nodoc:

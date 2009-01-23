@@ -55,6 +55,16 @@ module Hyrarchy
       parent(false).mediant(self)
     end
     
+    # Returns the path of the sibling immediately before the node at this path.
+    # If this is the path of the first sibling, returns nil.
+    def previous_sibling
+      p = parent(false)
+      return nil if self == p.first_child
+      Hyrarchy::EncodedPath(
+        numerator - p.numerator,
+        denominator - p.denominator)
+    end
+    
     # Finds the mediant of this fraction and +other+.
     def mediant(other)
       Hyrarchy::EncodedPath(
