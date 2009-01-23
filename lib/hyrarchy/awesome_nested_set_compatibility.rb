@@ -265,8 +265,15 @@ module Hyrarchy
         raise NotImplementedError, "awesome_nested_set's left_sibling method isn't implemented in this version of Hyrarchy"
       end
 
-      def right_sibling # :nodoc:
-        raise NotImplementedError, "awesome_nested_set's right_sibling method isn't implemented in this version of Hyrarchy"
+      # Returns the sibling after this node. If this node is its parent's last
+      # child, returns nil.
+      def right_sibling
+        return nil if self == parent.children.last
+        sibling_path = send(:encoded_path).next_sibling
+        until self.class.exists?(:lft_numer => sibling_path.numerator, :lft_denom => sibling_path.denominator)
+          sibling_path = sibling_path.next_sibling
+        end
+        self.class.send(:find_by_encoded_path, sibling_path)
       end
 
       def move_left # :nodoc:
@@ -307,8 +314,27 @@ module Hyrarchy
         save!
       end
 
-      def move_to_right_of(other) # :nodoc:
-        raise NotImplementedError, "awesome_nested_set's move_to_right_of method isn't implemented in this version of Hyrarchy"
+      # The semantics of left and right don't quite map exactly from
+      # awesome_nested_set to Hyrarchy. For the purpose of this method, "right"
+      # means "after."
+      #
+      # If this node isn't a sibling of +other+, its parent will be set to
+      # +other+'s parent.
+      def move_to_right_of(other)
+        # Don't attempt an impossible move.
+        if other.is_descendant_of?(self)
+          raise ArgumentError, "you can't move a node to the right of one of its descendants"
+        end
+        # If +other+ is its parent's last child, we can simply append this node
+        # to the parent's children.
+        if other == other.parent.children.last
+          send(:encoded_path=, other.parent.send(:next_child_encoded_path))
+          save!
+        else
+          # Otherwise, this is equivalent to moving this node to the left of
+          # +other+'s right sibling.
+          move_to_left_of(other.right_sibling)
+        end
       end
 
       # Sets this node's parent to +node+ and calls save!.
