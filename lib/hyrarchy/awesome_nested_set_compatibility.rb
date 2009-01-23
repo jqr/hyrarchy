@@ -276,7 +276,8 @@ module Hyrarchy
       # Returns the sibling after this node. If this node is its parent's last
       # child, returns nil.
       def right_sibling
-        return nil if self == parent.children.last
+        siblings = root? ? self.class.roots : other.parent.children
+        return nil if self == siblings.last
         sibling_path = send(:encoded_path).next_sibling
         until self.class.exists?(:lft_numer => sibling_path.numerator, :lft_denom => sibling_path.denominator)
           sibling_path = sibling_path.next_sibling
@@ -335,8 +336,9 @@ module Hyrarchy
         end
         # If +other+ is its parent's last child, we can simply append this node
         # to the parent's children.
-        if other == other.parent.children.last
-          send(:encoded_path=, other.parent.send(:next_child_encoded_path))
+        siblings = other.root? ? self.class.roots : other.parent.children
+        if other == siblings.last
+          send(:encoded_path=, other.send(:encoded_path).next_sibling)
           save!
         else
           # Otherwise, this is equivalent to moving this node to the left of
