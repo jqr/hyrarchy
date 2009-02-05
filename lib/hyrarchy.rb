@@ -101,14 +101,19 @@ module Hyrarchy
     def next_child_encoded_path(parent_path)
       if parent_path == Hyrarchy::EncodedPath::ROOT
         if sibling = roots.last
-          sibling.send(:encoded_path).next_sibling
+          child_path = sibling.send(:encoded_path).next_sibling
         else
-          Hyrarchy::EncodedPath::ROOT.first_child
+          child_path = Hyrarchy::EncodedPath::ROOT.first_child
         end
       else
         node = find_by_encoded_path(parent_path)
-        node ? node.send(:next_child_encoded_path) : parent_path.first_child
+        child_path = node ?
+          node.send(:next_child_encoded_path) : parent_path.first_child
       end
+      while self.exists?(:lft_numer => p.numerator, :lft_denom => p.denominator)
+        child_path = p.next_sibling
+      end
+      child_path
     end
     
     # Returns the node with the specified encoded path.
