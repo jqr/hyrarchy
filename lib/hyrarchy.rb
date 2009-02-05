@@ -5,7 +5,7 @@ require 'hyrarchy/awesome_nested_set_compatibility'
 module Hyrarchy
   # Fudge factor to account for imprecision with floating point approximations
   # of a node's left and right fractions.
-  FLOAT_FUDGE_FACTOR = 0.0000000000001 # :nodoc:
+  FLOAT_FUDGE_FACTOR = 0.00000000001 # :nodoc:
   
   # Mixes Hyrarchy into ActiveRecord.
   def self.activate!
