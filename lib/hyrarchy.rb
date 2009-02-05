@@ -111,7 +111,7 @@ module Hyrarchy
           node.send(:next_child_encoded_path) : parent_path.first_child
       end
       while self.exists?(:lft_numer => child_path.numerator, :lft_denom => child_path.denominator)
-        child_path = p.next_sibling
+        child_path = child_path.next_sibling
       end
       child_path
     end
