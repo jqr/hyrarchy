@@ -1,6 +1,7 @@
 require 'rubygems'
 gem 'sqlite3-ruby'
 require 'activerecord'
+ActiveRecord::ActiveRecordError
 require 'yaml'
 
 $: << File.join(File.dirname(__FILE__), '..', 'lib')

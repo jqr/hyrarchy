@@ -2,6 +2,7 @@ require 'rubygems'
 gem 'sqlite3-ruby'
 require 'spec'
 require 'activerecord'
+ActiveRecord::ActiveRecordError
 require 'yaml'
 gem 'narray'
 require 'narray'
