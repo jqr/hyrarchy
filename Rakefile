@@ -3,11 +3,7 @@ $dir = File.dirname(__FILE__)
 
 task :default => :package
 
-desc "Run all unit tests"
-task :test do
-  tests = FileList["#{$dir}/test/*_test.rb"]
-  tests.each {|t| require t}
-end
+task :test => :spec
 
 desc "Run all specs"
 task :spec do
