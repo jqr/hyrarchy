@@ -3,6 +3,7 @@ gem 'sqlite3-ruby'
 require 'spec'
 require 'activerecord'
 require 'yaml'
+gem 'narray'
 require 'narray'
 
 # Load and activate Hyrarchy.
