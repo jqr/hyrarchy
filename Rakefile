@@ -37,3 +37,7 @@ desc "Install the gem with sudo"
 task :install => :package do
   system('sudo', 'gem', 'install', "#{$dir}/#{gem_pkg_task.package_dir}/#{gem_pkg_task.gem_file}")
 end
+
+task :sqlite do
+  ENV['DB'] = 'sqlite'
+end

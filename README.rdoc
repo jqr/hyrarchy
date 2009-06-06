@@ -64,6 +64,13 @@ Hyrarchy doesn't yet support awesome_nested_set's scoping feature or its view he
 
 Under the hood, Hyrarchy uses a combination of an adjacency list and a rational nested set. The nested set uses a technique developed by (I think) Vadim Tropashko, in which the left and right values are generated using Farey sequences. This makes it possible to insert new records without adjusting the left and right values of any other records. It also makes it possible to do many operations (like determining a record's depth in the tree) without accessing the database. For operations where rational nested sets perform poorly (such as finding a node's immediate descendants), the adjacency list is used.
 
+== Development
+
+Setup an sqlite database and run the specs.
+
+  rake sqlite migrate:up
+  rake sqlite spec
+
 == Credits and Copyright
 
 Heavily based on works by Vadim Tropashko and Wim Lewis. Implemented by Dana Danger. Tolerated by VivaZoya. Copyright (c) 2008 The Indianapolis Star, released under the MIT license. See LICENSE for details.
