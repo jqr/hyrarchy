@@ -1,3 +1,6 @@
+require 'activerecord'
+ActiveRecord::ActiveRecordError # Rails 2.3 fix: https://rails.lighthouseapp.com/projects/8994-ruby-on-rails/tickets/2577-when-using-activerecordassociations-outside-of-rails-a-nameerror-is-thrown
+
 require 'hyrarchy/encoded_path'
 require 'hyrarchy/collection_proxy'
 require 'hyrarchy/awesome_nested_set_compatibility'
