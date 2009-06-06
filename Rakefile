@@ -41,3 +41,7 @@ end
 task :sqlite do
   ENV['DB'] = 'sqlite'
 end
+
+task :performance do
+  ENV['PERFORMANCE'] = 'true'
+end

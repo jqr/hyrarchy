@@ -140,7 +140,7 @@ describe Hyrarchy do
       (slope * 1_000_000 + offset).should satisfy {|n| n < TIME_SPEC}
     end
     
-    unless ENV['SKIP_PERFORMANCE']
+    if ENV['PERFORMANCE']
       it "should scale with constant insertion and access times < #{(TIME_SPEC * 1000).to_i}ms" do
         Node.connection.execute("TRUNCATE TABLE #{Node.quoted_table_name}") rescue Node.delete_all
         insertion_times   = NArray.float(SAMPLE_SIZE)
