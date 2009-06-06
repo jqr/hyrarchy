@@ -28,4 +28,8 @@ class EncodedPathTests < Test::Unit::TestCase
   def test_next_sibling
     assert_equal(Rational(7, 10), @path.next_sibling)
   end
+  
+  def test_inspect
+    assert_equal('EncodedPath(5, 7)', @path.inspect)
+  end
 end

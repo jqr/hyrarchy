@@ -107,5 +107,9 @@ module Hyrarchy
         i += 1
       end
     end
+    
+    def inspect
+      %Q{EncodedPath(#{numerator}, #{denominator})}
+    end
   end
 end
