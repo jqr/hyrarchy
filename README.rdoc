@@ -71,6 +71,10 @@ Setup an sqlite database and run the specs.
   rake sqlite migrate:up
   rake sqlite spec
 
+You can also enable performance testing by prepending the performance task. Beware these take considerable time to run.
+
+  rake sqlite performance spec
+
 == Credits and Copyright
 
 Heavily based on works by Vadim Tropashko and Wim Lewis. Implemented by Dana Danger. Tolerated by VivaZoya. Copyright (c) 2008 The Indianapolis Star, released under the MIT license. See LICENSE for details.

@@ -34,10 +34,12 @@ task :install => :package do
   system('sudo', 'gem', 'install', "#{$dir}/#{gem_pkg_task.package_dir}/#{gem_pkg_task.gem_file}")
 end
 
+desc 'Use sqlite for specs'
 task :sqlite do
   ENV['DB'] = 'sqlite'
 end
 
+desc 'Enable performance specs'
 task :performance do
   ENV['PERFORMANCE'] = 'true'
 end
